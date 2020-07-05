@@ -10,7 +10,7 @@ public class A_Star {
         int sizeY  = 10;
         int startX = 0;
         int startY = 9;
-        int endX   = 7;
+        int endX   = 6;
         int endY   = 5;
 
         // Run the algorithm and save it to a 2D array of cells
@@ -59,6 +59,7 @@ public class A_Star {
             int chosenX = currentX;
 
             int f = 999999;
+            double lastDistToEnd = 99999;
             for (int y = -1; y <= 1; y ++) {
                 if (currentY + y < 0 || currentY + y >= sizeY) {
 //                    System.out.println("passedY " + (currentY + y));
@@ -78,9 +79,14 @@ public class A_Star {
                         continue;
                     }
 
+                    double a = Math.abs((currentY + y) - endY);
+                    double b = Math.abs((currentX + x) - endX);
+
+                    double distToEnd = Math.sqrt(a * a + b * b);
+
                     int h = calcDist(currentY + y, currentX + x, endY, endX);
 
-                    if ((g + 1) + h < f) {
+                    if (((g + 1) + h < f) || ((g + 1) + h == f && distToEnd < lastDistToEnd)) {
                         f = (g + 1) + h;
 
                         chosenY = currentY + y;
@@ -143,13 +149,12 @@ public class A_Star {
         // the taken path
         int g = 0;
 
-        int gMod = 1;
-
         while (!finished) {
             int chosenY = currentY;
             int chosenX = currentX;
 
             int f = 999999;
+            double lastDistToEnd = 99999;
             for (int y = -1; y <= 1; y ++) {
                 if (currentY + y < 0 || currentY + y >= sizeY) {
 //                    System.out.println("passedY " + (currentY + y));
@@ -167,16 +172,15 @@ public class A_Star {
                         continue;
                     }
 
-                    if ((y == -1 && x == -1) || (y == -1 && x == 1) || (y == 1 && x == -1) || (y == 1 && x == 1)) {
-                        gMod = 2;
-                    } else {
-                        gMod = 1;
-                    }
+                    double a = Math.abs((currentY + y) - endY);
+                    double b = Math.abs((currentX + x) - endX);
+
+                    double distToEnd = Math.sqrt(a * a + b * b);
 
                     int h = maxDist(currentY + y, currentX + x, endY, endX);
 
-                    if ((g + gMod) + h < f) {
-                        f = (g + gMod) + h;
+                    if (((g + 1) + h < f) || ((g + 1) + h == f && distToEnd < lastDistToEnd)) {
+                        f = (g + 1) + h;
 
                         chosenY = currentY + y;
                         chosenX = currentX + x;
@@ -194,7 +198,7 @@ public class A_Star {
                 currentY = chosenY;
                 currentX = chosenX;
 
-                g += gMod;
+                g ++;
 
                 pathCells[currentY][currentX] = Cell.PATH;
             }
