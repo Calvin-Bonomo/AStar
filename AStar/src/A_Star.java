@@ -8,19 +8,19 @@ public class A_Star {
         // Set the starting variables for the pathfinding algorithm
         int sizeX  = 10;
         int sizeY  = 10;
-        int startX = 1;
+        int startX = 0;
         int startY = 9;
-        int endX   = 2;
+        int endX   = 7;
         int endY   = 5;
 
         // Run the algorithm and save it to a 2D array of cells
-        Cell[][] pathCells = runAStar(sizeX, sizeY, startX, startY, endX, endY);
+        Cell[][] pathCells = runAStar8Dir(sizeX, sizeY, startX, startY, endX, endY);
 
         // Print the map to the console
         printMap(pathCells);
     }
 
-    static Cell[][] runAStar(int sizeX, int sizeY, int startX, int startY, int endX, int endY) {
+    static Cell[][] runAStar4Dir(int sizeX, int sizeY, int startX, int startY, int endX, int endY) {
         System.out.println("Started Algorithm.");
 
         // Exit the program if the start and end are in the same spot
@@ -58,7 +58,7 @@ public class A_Star {
             int chosenY = currentY;
             int chosenX = currentX;
 
-            int f = 99999999;
+            int f = 999999;
             for (int y = -1; y <= 1; y ++) {
                 if (currentY + y < 0 || currentY + y >= sizeY) {
 //                    System.out.println("passedY " + (currentY + y));
@@ -74,7 +74,7 @@ public class A_Star {
                     } else if (pathCells[currentY + y][currentX + x] == Cell.END) {
                         finished = true;
                         break;
-                    } else if (pathCells[currentY + y][currentX + x] == Cell.PATH || pathCells[currentY + y][currentX + x] == Cell.START) {
+                    } else if (pathCells[currentY + y][currentX + x] == Cell.PATH || pathCells[currentY + y][currentX + x] == Cell.START || pathCells[currentY + y][currentX + x] == Cell.WALL) {
                         continue;
                     }
 
@@ -92,15 +92,112 @@ public class A_Star {
                 }
 
 //                printMap(pathCells);
-
-//                System.out.println("Chosen: [" + currentY + ", " + currentX + "]");
+//
+//                System.out.println("---------------------");
             }
-            currentY = chosenY;
-            currentX = chosenX;
+            if (!finished) {
+                currentY = chosenY;
+                currentX = chosenX;
 
-            g++;
+                g++;
 
-            pathCells[currentY][currentX] = Cell.PATH;
+                pathCells[currentY][currentX] = Cell.PATH;
+            }
+        }
+        System.out.println("Finished algorithm.");
+
+        return pathCells;
+    }
+
+    static Cell[][] runAStar8Dir(int sizeX, int sizeY, int startX, int startY, int endX, int endY) {
+        System.out.println("Started Algorithm.");
+
+        // Exit the program if the start and end are in the same spot
+        // or if the start or end are out of bounds
+        if ((startX == endX && startY == endY) || (endX >= sizeX || startX >= sizeX) || (endY < 0 || startY < 0)) {
+            exit();
+        }
+
+        // Create the cell map
+        Cell[][] pathCells = new Cell[sizeY][sizeX];
+
+        // Populate the map with empty cells
+        for (int y = 0; y < sizeY; y ++) {
+            for (int x = 0; x < sizeX; x ++) {
+                if (startY == y && startX == x) {
+                    pathCells[y][x] = Cell.START;
+                } else if (endY == y && endX == x) {
+                    pathCells[y][x] = Cell.END;
+                } else {
+                    pathCells[y][x] = Cell.EMPTY;
+                }
+            }
+        }
+
+        boolean finished = false;
+
+        int currentY = startY;
+        int currentX = startX;
+
+        // g is the distance from the start to the current spot following
+        // the taken path
+        int g = 0;
+
+        int gMod = 1;
+
+        while (!finished) {
+            int chosenY = currentY;
+            int chosenX = currentX;
+
+            int f = 999999;
+            for (int y = -1; y <= 1; y ++) {
+                if (currentY + y < 0 || currentY + y >= sizeY) {
+//                    System.out.println("passedY " + (currentY + y));
+                    continue;
+                }
+
+                for (int x = -1; x <= 1; x ++) {
+                    if ((currentX + x < 0 || currentX + x >= sizeX) || (y == 0 && x == 0)) {
+//                        System.out.println("passedX " + (currentX + x));
+                        continue;
+                    } else if (pathCells[currentY + y][currentX + x] == Cell.END) {
+                        finished = true;
+                        break;
+                    } else if (pathCells[currentY + y][currentX + x] == Cell.PATH || pathCells[currentY + y][currentX + x] == Cell.START || pathCells[currentY + y][currentX + x] == Cell.WALL) {
+                        continue;
+                    }
+
+                    if ((y == -1 && x == -1) || (y == -1 && x == 1) || (y == 1 && x == -1) || (y == 1 && x == 1)) {
+                        gMod = 2;
+                    } else {
+                        gMod = 1;
+                    }
+
+                    int h = maxDist(currentY + y, currentX + x, endY, endX);
+
+                    if ((g + gMod) + h < f) {
+                        f = (g + gMod) + h;
+
+                        chosenY = currentY + y;
+                        chosenX = currentX + x;
+                    }
+                }
+                if (finished) {
+                    break;
+                }
+
+//                printMap(pathCells);
+//
+//                System.out.println("---------------------");
+            }
+            if (!finished) {
+                currentY = chosenY;
+                currentX = chosenX;
+
+                g += gMod;
+
+                pathCells[currentY][currentX] = Cell.PATH;
+            }
         }
         System.out.println("Finished algorithm.");
 
@@ -112,6 +209,13 @@ public class A_Star {
         double b = Math.abs(point1X - point2X);
 
         return (int) (a + b);
+    }
+
+    static int maxDist(int point1Y, int point1X, int point2Y, int point2X) {
+        double a = Math.abs(point1Y - point2Y);
+        double b = Math.abs(point1X - point2X);
+
+        return (int) Math.max(a, b);
     }
 
     static void printMap(Cell[][] pathCells) {
